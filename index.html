@@ -1,0 +1,24 @@
+<!DOCTYPE html><html><head><title>Blog Platform</title>
+<style>body{font-family:Arial;background:#f0f2f5;padding:20px} .card{background:white;padding:20px;border-radius:10px;margin:10px 0;box-shadow:0 2px 8px #ccc} input,textarea{width:100%;padding:10px;margin:5px 0} button{background:#1877f2;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer}</style></head>
+<body>
+<h1>📝 Blog Platform with Comments</h1>
+<div class="card"><h3>Login / Register</h3>
+<input id="u" placeholder="Username"><input id="p" type="password" placeholder="Password">
+<button onclick="register()">Register</button> <button onclick="login()">Login</button> <span id="who"></span></div>
+
+<div class="card"><h3>Create Post</h3>
+<input id="title" placeholder="Title"><textarea id="content" placeholder="Write blog..."></textarea>
+<button onclick="createPost()">Post</button></div>
+
+<div id="posts"></div>
+<script>
+let user='';
+async function register(){ await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u.value,password:p.value})}); alert('Registered! Now Login'); }
+async function login(){ let r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u.value,password:p.value})}); let d=await r.json(); user=d.user; document.getElementById('who').innerText='Hi '+user; load(); }
+async function load(){ let r=await fetch('/api/posts'); let data=await r.json(); document.getElementById('posts').innerHTML=data.map(p=>`<div class="card"><h3>${p.title}</h3><p>${p.content}</p><small>by ${p.author}</small><br><button onclick="delPost(${p.id})">Delete</button> <button onclick="editPost(${p.id})">Edit</button><hr><b>Comments:</b>${p.comments.map(c=>`<p>💬 <b>${c.author}:</b> ${c.text}</p>`).join('')}<input id="c${p.id}" placeholder="Add comment"><button onclick="addComment(${p.id})">Comment</button></div>`).join(''); }
+async function createPost(){ await fetch('/api/posts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title.value,content:content.value})}); load(); }
+async function delPost(id){ await fetch('/api/posts/'+id,{method:'DELETE'}); load(); }
+async function editPost(id){ let t=prompt('New Title'), c=prompt('New Content'); await fetch('/api/posts/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:t,content:c})}); load(); }
+async function addComment(id){ let txt=document.getElementById('c'+id).value; await fetch('/api/comment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({post_id:id,text:txt})}); load(); }
+load();
+</script></body></html>
